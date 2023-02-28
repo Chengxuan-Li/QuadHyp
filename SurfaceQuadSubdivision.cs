@@ -23,8 +23,8 @@ namespace QuadHyp
 
         public NurbsCurve TrimCurve3d;
         public NurbsCurve TrimCurve2d;
-        public List<NurbsCurve> resultCurves2d;
-        public List<NurbsCurve> resultCurves3d;
+        public List<NurbsCurve> resultCurves2d = new List<NurbsCurve>();
+        public List<NurbsCurve> resultCurves3d = new List<NurbsCurve>();
 
         public SurfaceQuadSubdivision(NurbsSurface _srf, int _UCount, int _VCount)
         {
@@ -389,7 +389,7 @@ namespace QuadHyp
         }
 
 
-        public void CalculateTrims(bool coarse, ref object S)
+        public void CalculateTrims(bool coarse)
         {
             PolygonPolygonAnalyticalIntersection2d PPI2;
 
@@ -400,15 +400,13 @@ namespace QuadHyp
 
                 if (PPI2.hasResult)
                 {
-                    try
-                    {
+
 
                         resultCurves2d.Add(PPI2.resultCurve);
 
-                    }
-                    catch (Exception e) { }
+
                 }
-                S = 1;
+                
             }
             resultCurves3d = UV2XYZ(resultCurves2d);
 

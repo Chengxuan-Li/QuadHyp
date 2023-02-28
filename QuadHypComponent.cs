@@ -135,11 +135,14 @@ namespace QuadHyp
                 int id = edges.FindIndex(x => x.GetHashCode().Equals(edge.GetHashCode()));
                 indices.Add(id);
             }
+            
 
+            // .Net C# additional checks required to avoid negative indexing
+            // GH C# is fine with negative indexing
             BrepEdge bottomEdge = edges[indices[0]];
             BrepEdge topEdge = edges[indices[3]];
             BrepEdge rightEdge = edges[(indices[0] - 1)>=0? (indices[0] - 1): (indices.Count - 1)];
-            BrepEdge leftEdge = edges[indices[3] - 1];
+            BrepEdge leftEdge = edges[(indices[3] - 1)>=0? (indices[3] - 1): (indices.Count - 1)];
 
             List<NurbsCurve> trimCurves = new List<NurbsCurve>(){
         topEdge.ToNurbsCurve(),
@@ -190,14 +193,14 @@ namespace QuadHyp
             SQS.AddTrim(trimCurve);
             var A = SQS.GetAllTriangulatedPolygons();
 
-            //SQS.CalculateTrims(true, ref SS);
+            SQS.CalculateTrims(true);
 
-            //B = SQS.resultCurves2d;
+            var B = SQS.resultCurves2d;
 
 
             
             
-            DA.SetDataList(1, A);
+            DA.SetDataList(1, B);
 
 
 
