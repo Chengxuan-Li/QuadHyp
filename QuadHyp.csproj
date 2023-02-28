@@ -56,9 +56,13 @@
     </Reference>
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="LineLineAnalyticalIntersection2d.cs" />
+    <Compile Include="PolygonPolygonAnalyticalIntersection2d.cs" />
     <Compile Include="QuadHypComponent.cs" />
     <Compile Include="QuadHypInfo.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
+    <Compile Include="Span.cs" />
+    <Compile Include="SurfaceQuadSubdivision.cs" />
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 

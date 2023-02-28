@@ -1,9 +1,18 @@
 ﻿using Grasshopper.Kernel;
 using System;
 using System.Drawing;
+using System.Collections.Generic;
+using System.Linq;
+using System.Text;
+using System.Threading.Tasks;
+using Rhino;
+using Rhino.Geometry;
+using Rhino.Collections;
 
 namespace QuadHyp
 {
+
+
     public class QuadHypInfo : GH_AssemblyInfo
     {
         public override string Name
@@ -33,7 +42,7 @@ namespace QuadHyp
         {
             get
             {
-                return new Guid("d0a20b9f-0207-4a64-be06-9f71b65243ad");
+                return new Guid("276c47fb-3ad8-4783-90bc-f378936b32f7");
             }
         }
 
