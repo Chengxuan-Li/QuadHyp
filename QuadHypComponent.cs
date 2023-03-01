@@ -134,9 +134,20 @@ namespace QuadHyp
             if (UDim == 99999999.99) { return; }
             if (VDim == 99999999.99) { return; }
 
-            NurbsSurface srf = Bsrf.Faces[0].ToNurbsSurface();
+            //NurbsSurface srf = Bsrf.Faces[0].ToNurbsSurface();
+            Brep brep;
+            if (Bsrf.Edges.Count == 3)
+            {
+                var cs = Bsrf.DuplicateEdgeCurves(true);
+                var bplaceholder = Brep.CreatePlanarBreps(cs)[0];
+                brep = bplaceholder.Faces[0].ToNurbsSurface().ToBrep();
+            } else
+            {
+                brep = Bsrf;
+            }
+
+
             
-            var brep = srf.ToBrep();
             
 
             
