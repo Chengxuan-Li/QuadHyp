@@ -80,7 +80,7 @@ namespace QuadHyp
         /// </summary>
         protected override void RegisterInputParams(GH_Component.GH_InputParamManager pManager)
         {
-            pManager.AddSurfaceParameter("QuadSurface", "QS", "QuadSurface", GH_ParamAccess.item);
+            pManager.AddBrepParameter("QuadSurface", "QS", "QuadSurface", GH_ParamAccess.item);
             pManager.AddNumberParameter("UDim", "UD", "UDimension", GH_ParamAccess.item);
             pManager.AddNumberParameter("VDim", "VD", "VDimension", GH_ParamAccess.item);
             pManager.AddNumberParameter("Distance", "d", "OffsetDistance", GH_ParamAccess.item);
@@ -114,7 +114,7 @@ namespace QuadHyp
 
 
             // Declare a variable for the input SURFACE
-            Surface srf = null;
+            Brep Bsrf = null;
             double UDim = 99999999.99;
             double VDim = 99999999;
             double distance = 0.1;
@@ -122,7 +122,7 @@ namespace QuadHyp
 
             // Use the DA object to retrieve the data inside the first input parameter.
             // If the retieval fails (for example if there is no data) we need to abort.
-            if (!DA.GetData(0, ref srf)) { return; }
+            if (!DA.GetData(0, ref Bsrf)) { return; }
             if (!DA.GetData(1, ref UDim)) { return; }
             if (!DA.GetData(2, ref VDim)) { return; }
             if (!DA.GetData(3, ref distance)) { return; }
@@ -130,11 +130,16 @@ namespace QuadHyp
 
 
             // If the retrieved data is Nothing, we need to abort.
-            if (srf == null) { return; }
+            if (Bsrf == null) { return; }
             if (UDim == 99999999.99) { return; }
             if (VDim == 99999999.99) { return; }
 
-            Brep brep = srf.ToBrep();
+            NurbsSurface srf = Bsrf.Faces[0].ToNurbsSurface();
+            
+            var brep = srf.ToBrep();
+            
+
+            
             RhinoList<BrepEdge> edges = new RhinoList<BrepEdge>(brep.Edges);
             RhinoList<BrepEdge> sortedEdges = new RhinoList<BrepEdge>(brep.Edges);
             RhinoList<int> indices = new RhinoList<int>();
@@ -153,12 +158,27 @@ namespace QuadHyp
             BrepEdge rightEdge = edges[(indices[0] - 1)>=0? (indices[0] - 1): (indices.Count - 1)];
             BrepEdge leftEdge = edges[(indices[3] - 1)>=0? (indices[3] - 1): (indices.Count - 1)];
 
-            List<NurbsCurve> trimCurves = new List<NurbsCurve>(){
+            var es = Bsrf.DuplicateEdgeCurves(true);
+            List<NurbsCurve> trimCurves;
+            if (es.Length == 3)
+            {
+                trimCurves = new List<NurbsCurve>()
+                {
+                    es[0].ToNurbsCurve(),
+                    es[1].ToNurbsCurve(),
+                    es[2].ToNurbsCurve()
+                };
+            } else
+            {
+                trimCurves = new List<NurbsCurve>(){
         topEdge.ToNurbsCurve(),
         rightEdge.ToNurbsCurve(),
         bottomEdge.ToNurbsCurve(),
         leftEdge.ToNurbsCurve()
         };
+
+            }
+
 
             NurbsCurve trimCurve = Curve.JoinCurves(trimCurves)[0].ToNurbsCurve();
 
@@ -183,9 +203,7 @@ namespace QuadHyp
             targetHeight = Math.Ceiling(targetHeight / VDim) * VDim;
 
 
-            int UCount, VCount;
-            UCount = (int)Math.Ceiling(targetWidth / UDim);
-            VCount = (int)Math.Ceiling(targetHeight / VDim);
+            
 
             // Adjust lengths of top and bottom curves to be targetWidth
             ScaleCurve(topCurve, targetWidth);
@@ -194,9 +212,14 @@ namespace QuadHyp
 
 
 
+            ControlEdgesAsymmetryAdjustment CEAA = new ControlEdgesAsymmetryAdjustment(topCurve.PointAtStart, topCurve.PointAtEnd, bottomCurve.PointAtStart, bottomCurve.PointAtEnd);
 
-            NurbsSurface newSrf = NurbsSurface.CreateFromCorners(topCurve.PointAtStart, topCurve.PointAtEnd, bottomCurve.PointAtStart, bottomCurve.PointAtEnd);
+            NurbsSurface newSrf = CEAA.surface;
             //A = newSrf;
+
+            int UCount, VCount;
+            UCount = (int)Math.Ceiling(newSrf.Domain(0).Length / UDim);
+            VCount = (int)Math.Ceiling(newSrf.Domain(1).Length / VDim);
 
             DA.SetData(0, newSrf);
 
