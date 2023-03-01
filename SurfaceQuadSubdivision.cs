@@ -367,6 +367,15 @@ namespace QuadHyp
             return crvs;
         }
 
+        public void UV2XYZ(ref Mesh mesh)
+        {
+            for (int i = 0; i < mesh.Vertices.Count; i++)
+            {
+                Point3d v = srf.PointAt(mesh.Vertices[i].X, mesh.Vertices[i].Y);
+                mesh.Vertices[i] = new Point3f((float)v.X, (float)v.Y, (float)v.Z);
+            }
+        }
+
         public NurbsSurface GetFacetedSurface3D(Interval UInterval, Interval VInterval)
         {
             Point3d A, B, C, D;

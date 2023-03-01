@@ -57,6 +57,7 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="LineLineAnalyticalIntersection2d.cs" />
+    <Compile Include="OffsetHandler.cs" />
     <Compile Include="PolygonPolygonAnalyticalIntersection2d.cs" />
     <Compile Include="QuadHypComponent.cs" />
     <Compile Include="QuadHypInfo.cs" />

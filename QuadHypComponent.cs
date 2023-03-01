@@ -83,6 +83,8 @@ namespace QuadHyp
             pManager.AddSurfaceParameter("QuadSurface", "QS", "QuadSurface", GH_ParamAccess.item);
             pManager.AddNumberParameter("UDim", "UD", "UDimension", GH_ParamAccess.item);
             pManager.AddNumberParameter("VDim", "VD", "VDimension", GH_ParamAccess.item);
+            pManager.AddNumberParameter("Distance", "d", "OffsetDistance", GH_ParamAccess.item);
+            pManager.AddNumberParameter("MinApertureRatio", "MinAR", "MinimumApertureRatio", GH_ParamAccess.item);
 
         }
 
@@ -91,10 +93,13 @@ namespace QuadHyp
         /// </summary>
         protected override void RegisterOutputParams(GH_Component.GH_OutputParamManager pManager)
         {
-            
-            pManager.AddTextParameter("info", "info", "info", GH_ParamAccess.item);
-            pManager.AddGeometryParameter("TestOut", "TO", "TestOutput", GH_ParamAccess.list);
-          
+            pManager.AddSurfaceParameter("Surface", "Srf", "SurfaceGenerated", GH_ParamAccess.item);
+            pManager.AddCurveParameter("Curves2d", "Crv2d", "Result2dCurves", GH_ParamAccess.list);
+            pManager.AddCurveParameter("Curves3d", "Crv3d", "Result3dCurves", GH_ParamAccess.list);
+            pManager.AddMeshParameter("Meshes3d", "M3d", "Result3dMeshes", GH_ParamAccess.list);
+            pManager.AddCurveParameter("TrimCurve3d", "TrCrv3d", "TrimEdges3dCurve", GH_ParamAccess.item);
+
+
 
 
         }
@@ -112,19 +117,23 @@ namespace QuadHyp
             Surface srf = null;
             double UDim = 99999999.99;
             double VDim = 99999999;
+            double distance = 0.1;
+            double minApertureRatio = 0.5;
 
             // Use the DA object to retrieve the data inside the first input parameter.
             // If the retieval fails (for example if there is no data) we need to abort.
             if (!DA.GetData(0, ref srf)) { return; }
             if (!DA.GetData(1, ref UDim)) { return; }
             if (!DA.GetData(2, ref VDim)) { return; }
+            if (!DA.GetData(3, ref distance)) { return; }
+            if (!DA.GetData(4, ref minApertureRatio)) { return; }
+
 
             // If the retrieved data is Nothing, we need to abort.
             if (srf == null) { return; }
             if (UDim == 99999999.99) { return; }
             if (VDim == 99999999.99) { return; }
 
-            DA.SetData(0, "123a");
             Brep brep = srf.ToBrep();
             RhinoList<BrepEdge> edges = new RhinoList<BrepEdge>(brep.Edges);
             RhinoList<BrepEdge> sortedEdges = new RhinoList<BrepEdge>(brep.Edges);
@@ -189,18 +198,47 @@ namespace QuadHyp
             NurbsSurface newSrf = NurbsSurface.CreateFromCorners(topCurve.PointAtStart, topCurve.PointAtEnd, bottomCurve.PointAtStart, bottomCurve.PointAtEnd);
             //A = newSrf;
 
+            DA.SetData(0, newSrf);
+
             SurfaceQuadSubdivision SQS = new SurfaceQuadSubdivision(newSrf, UCount, VCount);
             SQS.AddTrim(trimCurve);
-            var A = SQS.GetAllTriangulatedPolygons();
-
+            
+            SQS.GetAllTriangulatedPolygons();
             SQS.CalculateTrims(true);
 
-            var B = SQS.resultCurves2d;
+            var resultCurves2d = SQS.resultCurves2d;
+            DA.SetDataList(1, resultCurves2d);
+            var resultCurves3d = SQS.resultCurves3d;
+            DA.SetDataList(2, resultCurves3d);
+
+            List<Mesh> meshes = new List<Mesh>();
+            foreach (NurbsCurve curve in resultCurves2d)
+            {
+                List<Point3d> pts = new List<Point3d>();
+                for (int i = 0; i < curve.SpanCount; i++)
+                {
+                    pts.Add(curve.PointAt(curve.SpanDomain(i).T0));
+                }
+                pts.Add(pts[0]);
 
 
+                OffsetHandler FHR = new OffsetHandler(new Polyline(pts), distance, minApertureRatio);
+                List<Polyline> resultPolylines = new List<Polyline>();
+                FHR.GetResultPolylines(out resultPolylines);
+                Mesh mesh = new Mesh();
+                foreach (Polyline polyline in resultPolylines)
+                {
+                    FHR.GenerateMeshFromPolyLine(polyline, out mesh);
+                    SQS.UV2XYZ(ref mesh);
+                    meshes.Add(mesh);
+                }
+            }
+
+            DA.SetDataList(3, meshes);
+
+            DA.SetData(4, SQS.TrimCurve3d);
             
             
-            DA.SetDataList(1, B);
 
 
 
