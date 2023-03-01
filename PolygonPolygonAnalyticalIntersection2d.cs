@@ -183,14 +183,25 @@ namespace QuadHyp
 
             if ((resultSpans.Count != 0) & (resultSpans != null))
             {
-                Console.WriteLine("123");//TODO
+                
 
                 foreach (Span s in resultSpans)
                 {
                     resultCurves.Add(s.line.ToNurbsCurve());
                 }
-                resultCurve = Curve.JoinCurves(resultCurves)[0].ToNurbsCurve();
-                hasResult = true;
+
+                var joined = Curve.JoinCurves(resultCurves);
+                if ((joined.Length >= 1) & (joined != null))
+                {
+                    resultCurve = joined[0].ToNurbsCurve();
+                    hasResult = true;
+                } else
+                {
+                    hasResult = false;
+                }
+                
+
+                
             }
             else
             {
